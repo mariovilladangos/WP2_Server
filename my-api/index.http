@@ -1,0 +1,9 @@
+### Variables
+@baseUrl = http://localhost:3000
+@apiUrl ={{baseUrl}}/api
+
+### HEALTH CHECK
+GET {{baseUrl}}/health
+
+### Info de la api
+GET {{apiUrl}}
