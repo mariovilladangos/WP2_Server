@@ -30,7 +30,7 @@ Content-Type: application/json
 
 {
   "title": "Comprar pan",
-  "description": "Ir al supermercado y comprar pan",
+  "description": "Ir al supermercado y comprar pan"
 }
 
 ### Complete first todo

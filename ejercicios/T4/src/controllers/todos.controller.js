@@ -55,14 +55,13 @@ export const update = (req, res) => {
   const lastValues = items[index];
   const { title, description, priority } = req.body;
   
-
+  
 
   items[index] = {
-    id,
-    title: title,
-    description: description,
-    priority: priority,
-    completed: lastValues.completed
+    ...items[index],
+    title: title || lastValues.title,
+    description: description || lastValues.description,
+    priority: priority || lastValues.priority
   };
   
   res.json(items[index]);
