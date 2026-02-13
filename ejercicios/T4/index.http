@@ -1,0 +1,43 @@
+### Variables
+@baseUrl = http://localhost:3000
+@apiUrl ={{baseUrl}}/api
+
+### HEALTH CHECK
+GET {{baseUrl}}/health
+
+### Info de la api
+GET {{apiUrl}}
+
+### Get all todos
+GET {{apiUrl}}/todos
+
+### Get first todo
+GET {{apiUrl}}/todos/1
+
+### Create new todo
+POST {{apiUrl}}/todos
+Content-Type: application/json
+
+{
+  "title": "Comprar leche",
+  "description": "Ir al supermercado y comprar leche",
+  "priority": "high"
+}
+
+### Update first todo
+PUT {{apiUrl}}/todos/1
+Content-Type: application/json
+
+{
+  "title": "Comprar pan",
+  "description": "Ir al supermercado y comprar pan",
+}
+
+### Complete first todo
+PATCH {{apiUrl}}/todos/1/toggle
+
+### Delete first todo
+DELETE {{apiUrl}}/todos/1
+
+
+
