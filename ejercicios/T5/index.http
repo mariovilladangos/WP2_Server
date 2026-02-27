@@ -1,10 +1,10 @@
 ### Base URL
 @baseUrl = http://localhost:3000/api
 @baseUrlUploads = http://localhost:3000/uploads
-@testMovieId = 69a1fe307f031d0352fc7eae
+@testMovieId = 69a206edf1148c0d165fcc47
 
 ### Listar películas
-GET {{baseUrl}}/movies?search=Example
+GET {{baseUrl}}/movies
 
 ### Obtener película por ID
 GET {{baseUrl}}/movies/{{testMovieId}}
@@ -14,9 +14,9 @@ POST {{baseUrl}}/movies
 Content-Type: application/json
 
 {
-  "title": "Example Movie",
-  "director": "Jane Doe",
-  "year": 2020,
+  "title": "Pelicula de ejemplo",
+  "director": "Max Verstappen",
+  "year": 2023,
   "genre": "drama",
   "copies": 3,
   "availableCopies": 3
@@ -27,7 +27,7 @@ PUT {{baseUrl}}/movies/{{testMovieId}}
 Content-Type: application/json
 
 {
-  "title": "Example Movie Updated"
+  "title": "Pelicula de ejemplo actualizada"
 }
 
 ### Eliminar película
@@ -46,7 +46,7 @@ PATCH {{baseUrl}}/movies/{{testMovieId}}/return
 GET {{baseUrl}}/movies/{{testMovieId}}/cover
 
 ### Obtener carátula por filename
-GET {{baseUrlUploads}}/file-1772190442350-174076269.jpg
+GET {{baseUrlUploads}}/cover-1772226208201-199141983.png
 
 ### Top películas
 GET {{baseUrl}}/movies/stats/top
