@@ -1,0 +1,63 @@
+### Base URL
+@baseUrl = http://localhost:3000/api
+@baseUrlUploads = http://localhost:3000/uploads
+@testMovieId = 69a1fe307f031d0352fc7eae
+
+### Listar películas
+GET {{baseUrl}}/movies?search=Example
+
+### Obtener película por ID
+GET {{baseUrl}}/movies/{{testMovieId}}
+
+### Crear película
+POST {{baseUrl}}/movies
+Content-Type: application/json
+
+{
+  "title": "Example Movie",
+  "director": "Jane Doe",
+  "year": 2020,
+  "genre": "drama",
+  "copies": 3,
+  "availableCopies": 3
+}
+
+### Actualizar película
+PUT {{baseUrl}}/movies/{{testMovieId}}
+Content-Type: application/json
+
+{
+  "title": "Example Movie Updated"
+}
+
+### Eliminar película
+DELETE {{baseUrl}}/movies/{{testMovieId}}
+
+### Alquilar película
+PATCH {{baseUrl}}/movies/{{testMovieId}}/rent
+
+### Devolver película
+PATCH {{baseUrl}}/movies/{{testMovieId}}/return
+
+### Subir carátula (usar curl para multipart)
+# curl -X PATCH http://localhost:3000/api/movies/:id/cover -F "cover=@C:\Ruta\a\foto.png"
+
+### Obtener carátula por movie id (devuelve la imagen directamente)
+GET {{baseUrl}}/movies/{{testMovieId}}/cover
+
+### Obtener carátula por filename
+GET {{baseUrlUploads}}/file-1772190442350-174076269.jpg
+
+### Top películas
+GET {{baseUrl}}/movies/stats/top
+
+### Películas disponibles
+GET {{baseUrl}}/movies/available
+
+### Puntuar película
+PATCH {{baseUrl}}/movies/{{testMovieId}}/rating
+Content-Type: application/json
+
+{
+  "rating": 5
+}
