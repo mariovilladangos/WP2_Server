@@ -1,0 +1,125 @@
+@baseUrl = http://localhost:3000/api
+@token = <pega_tu_token_aqui>
+@podcastId = <pega_un_id_de_podcast_aqui>
+
+### ============================================================
+### AUTH
+### ============================================================
+
+### Registrar usuario normal
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Juan Pérez",
+  "email": "juan@ejemplo.com",
+  "password": "MiPassword123"
+}
+
+###
+
+### Registrar usuario admin (cambia el rol desde MongoDB si es necesario)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "admin@ejemplo.com",
+  "password": "AdminPass123"
+}
+
+###
+
+### Login — copia el token de la respuesta y pégalo en @token
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan@ejemplo.com",
+  "password": "MiPassword123"
+}
+
+###
+
+### Login admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@ejemplo.com",
+  "password": "AdminPass123"
+}
+
+###
+
+### Obtener perfil del usuario autenticado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================================
+### PODCASTS — rutas públicas
+### ============================================================
+
+### Listar podcasts publicados (sin auth)
+GET {{baseUrl}}/podcasts
+
+###
+
+### Obtener podcast por ID (sin auth)
+GET {{baseUrl}}/podcasts/{{podcastId}}
+
+###
+
+### ============================================================
+### PODCASTS — rutas autenticadas
+### ============================================================
+
+### Crear podcast
+POST {{baseUrl}}/podcasts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Tech Talk Weekly",
+  "description": "Un podcast semanal sobre tecnología y desarrollo",
+  "category": "tech",
+  "duration": 3600,
+  "episodes": 1
+}
+
+###
+
+### Actualizar podcast (solo el autor)
+PUT {{baseUrl}}/podcasts/{{podcastId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Tech Talk Weekly - Actualizado",
+  "description": "Descripción actualizada del podcast",
+  "duration": 4200
+}
+
+###
+
+### ============================================================
+### PODCASTS — rutas admin
+### ============================================================
+
+### Listar todos los podcasts incluidos no publicados (admin)
+GET {{baseUrl}}/podcasts/admin/all
+Authorization: Bearer {{token}}
+
+###
+
+### Publicar / despublicar un podcast (admin)
+PATCH {{baseUrl}}/podcasts/{{podcastId}}/publish
+Authorization: Bearer {{token}}
+
+###
+
+### Eliminar un podcast (admin)
+DELETE {{baseUrl}}/podcasts/{{podcastId}}
+Authorization: Bearer {{token}}
