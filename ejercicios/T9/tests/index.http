@@ -1,0 +1,469 @@
+### T9 - API Biblioteca Digital - Manual Test File
+### Base URL: http://localhost:3000
+### Requires VS Code REST Client extension
+
+@baseUrl = http://localhost:3000/api
+@adminToken = {{loginAdmin.response.body.token}}
+@libToken = {{loginLib.response.body.token}}
+@userToken = {{loginUser.response.body.token}}
+
+# ─────────────────────────────────────────────
+# HEALTH CHECK
+# ─────────────────────────────────────────────
+
+### Health check
+GET http://localhost:3000/health
+
+### API info
+GET {{baseUrl}}/
+
+
+# ─────────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────────
+
+### Register new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "nuevo@ejemplo.com",
+  "name": "Usuario Nuevo",
+  "password": "password123"
+}
+
+###
+
+### Register LIBRARIAN
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "biblio@ejemplo.com",
+  "name": "Bibliotecario Test",
+  "password": "password123",
+  "role": "LIBRARIAN"
+}
+
+###
+
+### Register ADMIN
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "adminnew@ejemplo.com",
+  "name": "Admin Test",
+  "password": "password123",
+  "role": "ADMIN"
+}
+
+###
+
+### Login as ADMIN (seed)
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@biblioteca.com",
+  "password": "admin1234"
+}
+
+###
+
+### Login as LIBRARIAN (seed)
+# @name loginLib
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "librarian@biblioteca.com",
+  "password": "librarian1234"
+}
+
+###
+
+### Login as USER (seed)
+# @name loginUser
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@biblioteca.com",
+  "password": "user1234"
+}
+
+###
+
+### Get my profile (authenticated)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get profile - without token (expect 401)
+GET {{baseUrl}}/auth/me
+
+###
+
+### Login with wrong password (expect 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@biblioteca.com",
+  "password": "wrongpassword"
+}
+
+
+# ─────────────────────────────────────────────
+# BOOKS
+# ─────────────────────────────────────────────
+
+### List all books (public, paginated)
+GET {{baseUrl}}/books
+
+###
+
+### List books - page 2
+GET {{baseUrl}}/books?page=2&limit=3
+
+###
+
+### Filter by title
+GET {{baseUrl}}/books?title=great
+
+###
+
+### Filter by author
+GET {{baseUrl}}/books?author=orwell
+
+###
+
+### Filter by genre
+GET {{baseUrl}}/books?genre=fiction
+
+###
+
+### Filter available only
+GET {{baseUrl}}/books?available=true
+
+###
+
+### Get book by ID
+GET {{baseUrl}}/books/1
+
+###
+
+### Get book - not found (expect 404)
+GET {{baseUrl}}/books/99999
+
+###
+
+### Create book (LIBRARIAN/ADMIN)
+POST {{baseUrl}}/books
+Authorization: Bearer {{libToken}}
+Content-Type: application/json
+
+{
+  "isbn": "978-1-234-56789-0",
+  "title": "Don Quijote de la Mancha",
+  "author": "Miguel de Cervantes",
+  "genre": "Novela",
+  "description": "Las aventuras del ingenioso hidalgo.",
+  "publishedYear": 1605,
+  "copies": 4
+}
+
+###
+
+### Create book - as USER (expect 403)
+POST {{baseUrl}}/books
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "isbn": "978-0-000-00000-0",
+  "title": "Libro Sin Permiso",
+  "author": "Test",
+  "genre": "Test",
+  "publishedYear": 2024,
+  "copies": 1
+}
+
+###
+
+### Create book - missing required field (expect 400)
+POST {{baseUrl}}/books
+Authorization: Bearer {{libToken}}
+Content-Type: application/json
+
+{
+  "title": "Sin ISBN",
+  "author": "Test",
+  "genre": "Test",
+  "publishedYear": 2024,
+  "copies": 1
+}
+
+###
+
+### Update book (LIBRARIAN/ADMIN)
+PUT {{baseUrl}}/books/1
+Authorization: Bearer {{libToken}}
+Content-Type: application/json
+
+{
+  "copies": 5
+}
+
+###
+
+### Update book - not found (expect 404)
+PUT {{baseUrl}}/books/99999
+Authorization: Bearer {{libToken}}
+Content-Type: application/json
+
+{
+  "title": "No existe"
+}
+
+###
+
+### Delete book (ADMIN only)
+DELETE {{baseUrl}}/books/6
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Delete book - as LIBRARIAN (expect 403)
+DELETE {{baseUrl}}/books/1
+Authorization: Bearer {{libToken}}
+
+###
+
+### Delete book - not found (expect 404)
+DELETE {{baseUrl}}/books/99999
+Authorization: Bearer {{adminToken}}
+
+
+# ─────────────────────────────────────────────
+# LOANS
+# ─────────────────────────────────────────────
+
+### Request a loan (authenticated user)
+POST {{baseUrl}}/loans
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "bookId": 1
+}
+
+###
+
+### Request same book again (expect 400 - already active)
+POST {{baseUrl}}/loans
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "bookId": 1
+}
+
+###
+
+### Request loan - book not found (expect 404)
+POST {{baseUrl}}/loans
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "bookId": 99999
+}
+
+###
+
+### Request loan - no token (expect 401)
+POST {{baseUrl}}/loans
+Content-Type: application/json
+
+{
+  "bookId": 2
+}
+
+###
+
+### Get my loans
+GET {{baseUrl}}/loans
+Authorization: Bearer {{userToken}}
+
+###
+
+### Get my loans - no token (expect 401)
+GET {{baseUrl}}/loans
+
+###
+
+### Get ALL loans (LIBRARIAN/ADMIN)
+GET {{baseUrl}}/loans/all
+Authorization: Bearer {{libToken}}
+
+###
+
+### Get all loans as ADMIN
+GET {{baseUrl}}/loans/all
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get all loans as USER (expect 403)
+GET {{baseUrl}}/loans/all
+Authorization: Bearer {{userToken}}
+
+###
+
+### Return a loan (replace :id with actual loan ID)
+PUT {{baseUrl}}/loans/1/return
+Authorization: Bearer {{userToken}}
+
+###
+
+### Return already returned loan (expect 400)
+PUT {{baseUrl}}/loans/1/return
+Authorization: Bearer {{userToken}}
+
+###
+
+### Return loan - not found (expect 404)
+PUT {{baseUrl}}/loans/99999/return
+Authorization: Bearer {{userToken}}
+
+
+# ─────────────────────────────────────────────
+# REVIEWS
+# ─────────────────────────────────────────────
+
+### List reviews for a book (public)
+GET {{baseUrl}}/books/2/reviews
+
+###
+
+### List reviews - book not found (expect 404)
+GET {{baseUrl}}/books/99999/reviews
+
+###
+
+### Create review (requires returned loan for that book)
+POST {{baseUrl}}/books/2/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Excelente libro, muy recomendado."
+}
+
+###
+
+### Create review - no returned loan (expect 403)
+POST {{baseUrl}}/books/3/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Nunca lo devolví"
+}
+
+###
+
+### Create review - duplicate (expect 409)
+POST {{baseUrl}}/books/2/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 3,
+  "comment": "Segunda reseña duplicada"
+}
+
+###
+
+### Create review - invalid rating > 5 (expect 400)
+POST {{baseUrl}}/books/2/reviews
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "rating": 10
+}
+
+###
+
+### Create review - no token (expect 401)
+POST {{baseUrl}}/books/2/reviews
+Content-Type: application/json
+
+{
+  "rating": 4
+}
+
+###
+
+### Delete own review (replace :id with actual review ID)
+DELETE {{baseUrl}}/reviews/1
+Authorization: Bearer {{userToken}}
+
+###
+
+### Delete review as ADMIN
+DELETE {{baseUrl}}/reviews/1
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Delete review - not owner (expect 403)
+DELETE {{baseUrl}}/reviews/1
+Authorization: Bearer {{libToken}}
+
+###
+
+### Delete review - not found (expect 404)
+DELETE {{baseUrl}}/reviews/99999
+Authorization: Bearer {{userToken}}
+
+
+# ─────────────────────────────────────────────
+# STATS (BONUS)
+# ─────────────────────────────────────────────
+
+### Get library statistics (LIBRARIAN/ADMIN)
+GET {{baseUrl}}/stats
+Authorization: Bearer {{libToken}}
+
+###
+
+### Get stats as ADMIN
+GET {{baseUrl}}/stats
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get stats as USER (expect 403)
+GET {{baseUrl}}/stats
+Authorization: Bearer {{userToken}}
+
+###
+
+### Get stats - no token (expect 401)
+GET {{baseUrl}}/stats
+
+
+# ─────────────────────────────────────────────
+# SWAGGER DOCS
+# ─────────────────────────────────────────────
+
+### Open Swagger UI in browser
+GET http://localhost:3000/api-docs

@@ -1,0 +1,282 @@
+### Variables
+@baseUrl = http://localhost:3000
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzc1NzU5NjY1LCJleHAiOjE3NzYzNjQ0NjV9.WbhSmCFmbO1mpRQ61gGLy52DguxfWRvymGPPMNIMhrQ
+@librarianToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6IkxJQlJBUklBTiIsImlhdCI6MTc3NTc1OTY2NSwiZXhwIjoxNzc2MzY0NDY1fQ.e80U8aei2hyX4AReoOG5zjyJ-KaSuI95MfVf4awOuE0
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzU3NTk2NjUsImV4cCI6MTc3NjM2NDQ2NX0.pSsDNOYl1107kXayl8JOP9alsMnaI3imYJ-a_JfCflk
+@bookId = 2
+@loanId = 2
+@reviewId = 1
+
+### ============================================================
+### HEALTH CHECK
+### ============================================================
+
+### GET /health
+GET {{baseUrl}}/health
+
+### GET /api - API Info
+GET {{baseUrl}}/api
+
+### ============================================================
+### AUTH
+### ============================================================
+
+### POST /api/auth/register - Registrar usuario normal
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@test.com",
+  "name": "Test User",
+  "password": "password123"
+}
+
+### POST /api/auth/register - Registrar bibliotecario
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testlibrarian@test.com",
+  "name": "Test Librarian",
+  "password": "password123",
+  "role": "LIBRARIAN"
+}
+
+### POST /api/auth/register - Validación fallida (sin email)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Sin Email",
+  "password": "password123"
+}
+
+### POST /api/auth/login - Admin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@biblioteca.com",
+  "password": "admin1234"
+}
+
+### POST /api/auth/login - Librarian
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "librarian@biblioteca.com",
+  "password": "librarian1234"
+}
+
+### POST /api/auth/login - User
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@biblioteca.com",
+  "password": "user1234"
+}
+
+### POST /api/auth/login - Credenciales incorrectas
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@biblioteca.com",
+  "password": "wrongpassword"
+}
+
+### GET /api/auth/me - Perfil autenticado
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{userToken}}
+
+### GET /api/auth/me - Sin token (401)
+GET {{baseUrl}}/api/auth/me
+
+### ============================================================
+### BOOKS
+### ============================================================
+
+### GET /api/books - Listar todos los libros
+GET {{baseUrl}}/api/books
+
+### GET /api/books - Con filtros
+GET {{baseUrl}}/api/books?genre=Fiction&page=1&limit=3
+
+### GET /api/books - Buscar por título
+GET {{baseUrl}}/api/books?title=1984
+
+### GET /api/books - Solo disponibles
+GET {{baseUrl}}/api/books?available=true
+
+### GET /api/books/:id - Obtener libro por ID
+GET {{baseUrl}}/api/books/{{bookId}}
+
+### GET /api/books/:id - Libro no encontrado (404)
+GET {{baseUrl}}/api/books/9999
+
+### POST /api/books - Crear libro (como librarian)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+Authorization: Bearer {{librarianToken}}
+
+{
+  "isbn": "978-0-7432-7357-1",
+  "title": "El nombre del viento",
+  "author": "Patrick Rothfuss",
+  "genre": "Fantasy",
+  "description": "La historia de Kvothe, el legendario mago.",
+  "publishedYear": 2007,
+  "copies": 3
+}
+
+### POST /api/books - Sin autenticación (401)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "isbn": "978-0-7432-7357-2",
+  "title": "Sin Auth",
+  "author": "Autor",
+  "genre": "Fiction",
+  "publishedYear": 2020,
+  "copies": 1
+}
+
+### POST /api/books - Como USER (403)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "isbn": "978-0-7432-7357-3",
+  "title": "No permitido",
+  "author": "Autor",
+  "genre": "Fiction",
+  "publishedYear": 2020,
+  "copies": 1
+}
+
+### PUT /api/books/:id - Actualizar libro
+PUT {{baseUrl}}/api/books/{{bookId}}
+Content-Type: application/json
+Authorization: Bearer {{librarianToken}}
+
+{
+  "description": "Descripción actualizada del libro."
+}
+
+### DELETE /api/books/:id - Eliminar libro (solo ADMIN)
+DELETE {{baseUrl}}/api/books/{{bookId}}
+Authorization: Bearer {{adminToken}}
+
+### DELETE /api/books/:id - Sin permisos (librarian no puede borrar)
+DELETE {{baseUrl}}/api/books/{{bookId}}
+Authorization: Bearer {{librarianToken}}
+
+### ============================================================
+### LOANS
+### ============================================================
+
+### POST /api/loans - Solicitar préstamo
+POST {{baseUrl}}/api/loans
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "bookId": 2
+}
+
+### POST /api/loans - Libro no disponible
+POST {{baseUrl}}/api/loans
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "bookId": 9999
+}
+
+### GET /api/loans - Mis préstamos
+GET {{baseUrl}}/api/loans
+Authorization: Bearer {{userToken}}
+
+### GET /api/loans/all - Todos los préstamos (librarian/admin)
+GET {{baseUrl}}/api/loans/all
+Authorization: Bearer {{librarianToken}}
+
+### GET /api/loans/all - Sin permisos (USER)
+GET {{baseUrl}}/api/loans/all
+Authorization: Bearer {{userToken}}
+
+### PUT /api/loans/:id/return - Devolver libro
+PUT {{baseUrl}}/api/loans/{{loanId}}/return
+Authorization: Bearer {{userToken}}
+
+### PUT /api/loans/:id/return - Ya devuelto (error)
+PUT {{baseUrl}}/api/loans/{{loanId}}/return
+Authorization: Bearer {{userToken}}
+
+### ============================================================
+### REVIEWS
+### ============================================================
+
+### GET /api/books/:id/reviews - Reseñas de un libro
+GET {{baseUrl}}/api/books/2/reviews
+
+### POST /api/books/:id/reviews - Crear reseña (requiere préstamo devuelto)
+POST {{baseUrl}}/api/books/2/reviews
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "rating": 5,
+  "comment": "Libro excelente, muy recomendado!"
+}
+
+### POST /api/books/:id/reviews - Sin haber devuelto el libro (403)
+POST {{baseUrl}}/api/books/3/reviews
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "rating": 4,
+  "comment": "Sin préstamo devuelto"
+}
+
+### POST /api/books/:id/reviews - Rating inválido
+POST {{baseUrl}}/api/books/2/reviews
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "rating": 10,
+  "comment": "Rating fuera de rango"
+}
+
+### DELETE /api/reviews/:id - Eliminar reseña
+DELETE {{baseUrl}}/api/reviews/{{reviewId}}
+Authorization: Bearer {{userToken}}
+
+### DELETE /api/reviews/:id - Sin ser el autor (403)
+DELETE {{baseUrl}}/api/reviews/{{reviewId}}
+Authorization: Bearer {{librarianToken}}
+
+### ============================================================
+### STATS (BONUS)
+### ============================================================
+
+### GET /api/stats - Estadísticas completas (LIBRARIAN/ADMIN)
+GET {{baseUrl}}/api/stats
+Authorization: Bearer {{librarianToken}}
+
+### GET /api/stats - Como USER (403)
+GET {{baseUrl}}/api/stats
+Authorization: Bearer {{userToken}}
+
+### ============================================================
+### SWAGGER DOCS
+### ============================================================
+
+### GET /api-docs - Swagger UI
+GET {{baseUrl}}/api-docs/
