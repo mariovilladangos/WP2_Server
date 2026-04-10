@@ -1,0 +1,253 @@
+# T10 – Chat en Tiempo Real con Socket.IO
+# Manual REST API Tests
+# Use with REST Client (VS Code extension) or similar
+
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+
+### Health check
+GET {{baseUrl}}/health
+
+###
+
+# ─────────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────────
+
+### Registrar usuario
+# @name register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "mario",
+  "email": "mario@chat.test",
+  "password": "password123"
+}
+
+###
+
+### Registrar segundo usuario (para probar mensajes privados)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "email": "alice@chat.test",
+  "password": "password123"
+}
+
+###
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mario@chat.test",
+  "password": "password123"
+}
+
+###
+
+### Login con contraseña incorrecta (debe devolver 401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mario@chat.test",
+  "password": "wrongpassword"
+}
+
+###
+
+### Registrar con email duplicado (debe devolver 409)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "mario2",
+  "email": "mario@chat.test",
+  "password": "password123"
+}
+
+###
+
+### Registrar con datos inválidos (debe devolver 400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalido"
+}
+
+###
+
+### Obtener perfil del usuario autenticado
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### Obtener perfil sin token (debe devolver 401)
+GET {{baseUrl}}/api/auth/me
+
+###
+
+# ─────────────────────────────────────────────
+# ROOMS
+# ─────────────────────────────────────────────
+
+### Crear sala
+# @name createRoom
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "general",
+  "description": "Sala general de chat"
+}
+
+###
+
+### Crear sala privada
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "privada",
+  "description": "Sala privada",
+  "isPrivate": true
+}
+
+###
+
+### Crear sala con nombre duplicado (debe devolver 409)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "general"
+}
+
+###
+
+### Crear sala sin token (debe devolver 401)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "name": "sinauth"
+}
+
+###
+
+### Listar salas
+GET {{baseUrl}}/api/rooms
+Authorization: Bearer {{token}}
+
+###
+
+### Listar salas sin token (debe devolver 401)
+GET {{baseUrl}}/api/rooms
+
+###
+
+# ─────────────────────────────────────────────
+# MESSAGES (reemplaza ROOM_ID con un ID real)
+# ─────────────────────────────────────────────
+
+@roomId = ROOM_ID_AQUI
+@msgId = MSG_ID_AQUI
+
+### Obtener historial de mensajes
+GET {{baseUrl}}/api/rooms/{{roomId}}/messages
+Authorization: Bearer {{token}}
+
+###
+
+### Buscar mensajes (BONUS)
+GET {{baseUrl}}/api/rooms/{{roomId}}/messages?q=hola
+Authorization: Bearer {{token}}
+
+###
+
+### Buscar mensajes con paginación
+GET {{baseUrl}}/api/rooms/{{roomId}}/messages?limit=10&skip=0
+Authorization: Bearer {{token}}
+
+###
+
+### Sala inexistente (debe devolver 404)
+GET {{baseUrl}}/api/rooms/000000000000000000000000/messages
+Authorization: Bearer {{token}}
+
+###
+
+### Editar mensaje (BONUS)
+PATCH {{baseUrl}}/api/rooms/{{roomId}}/messages/{{msgId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "Mensaje editado desde index.http"
+}
+
+###
+
+### Editar mensaje con contenido vacío (debe devolver 400)
+PATCH {{baseUrl}}/api/rooms/{{roomId}}/messages/{{msgId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": ""
+}
+
+###
+
+### Eliminar mensaje (soft delete) (BONUS)
+DELETE {{baseUrl}}/api/rooms/{{roomId}}/messages/{{msgId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Reaccionar a un mensaje con emoji (BONUS)
+POST {{baseUrl}}/api/rooms/{{roomId}}/messages/{{msgId}}/reactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "emoji": "👍"
+}
+
+###
+
+### Reaccionar con otro emoji
+POST {{baseUrl}}/api/rooms/{{roomId}}/messages/{{msgId}}/reactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "emoji": "❤️"
+}
+
+###
+
+# ─────────────────────────────────────────────
+# SWAGGER DOCS
+# ─────────────────────────────────────────────
+
+### Ver documentación Swagger (abrir en navegador)
+GET {{baseUrl}}/api-docs
+
+###
+
+### API info
+GET {{baseUrl}}/api
+
+###
