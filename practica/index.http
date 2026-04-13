@@ -1,0 +1,231 @@
+### BildyApp API - Manual HTTP Testing
+### Set BASE_URL and tokens as variables below
+
+@baseUrl = http://localhost:3000
+@email = testuser@example.com
+@password = SecurePass1
+
+### ─── Health Check ────────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/health
+
+### ─── 1. Register ─────────────────────────────────────────────────────────────
+
+# @name register
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### After registering, check server logs for the 6-digit verification code
+### Set the variables below with values from the response:
+@accessToken = {{register.response.body.token}}
+@refreshToken = {{register.response.body.refreshToken}}
+
+### ─── 2. Email Validation ──────────────────────────────────────────────────────
+
+# Replace 123456 with the code from the server console log
+PUT {{baseUrl}}/api/user/validation
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "code": "123456"
+}
+
+### ─── 2b. Validation - Too many attempts (send wrong code 3 times first) ──────
+
+PUT {{baseUrl}}/api/user/validation
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "code": "000000"
+}
+
+### ─── 3. Login ────────────────────────────────────────────────────────────────
+
+# @name login
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### ─── 3b. Login - Invalid credentials ─────────────────────────────────────────
+
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "WrongPassword"
+}
+
+### ─── 4. Personal Onboarding ──────────────────────────────────────────────────
+
+PUT {{baseUrl}}/api/user/onboarding
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "John",
+  "lastName": "Doe",
+  "NIF": "12345678A"
+}
+
+### ─── 5a. Company Onboarding - Create new company ─────────────────────────────
+
+PUT {{baseUrl}}/api/user/company
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "isFreelance": false,
+  "name": "Acme Corp",
+  "CIF": "B12345678",
+  "address": {
+    "street": "Calle Mayor 1",
+    "city": "Madrid",
+    "postal": "28001",
+    "country": "Spain"
+  }
+}
+
+### ─── 5b. Company Onboarding - Freelance (uses NIF as CIF) ────────────────────
+
+PUT {{baseUrl}}/api/user/company
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "isFreelance": true,
+  "name": "My Freelance Business"
+}
+
+### ─── 5c. Company Onboarding - Join existing company by CIF ───────────────────
+
+PUT {{baseUrl}}/api/user/company
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "isFreelance": false,
+  "name": "Join Acme",
+  "CIF": "B12345678"
+}
+
+### ─── 6. Upload Company Logo ───────────────────────────────────────────────────
+
+# Use a multipart/form-data request with a file named "logo"
+PATCH {{baseUrl}}/api/user/logo
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="logo"; filename="logo.png"
+Content-Type: image/png
+
+< ./logo.png
+------FormBoundary--
+
+### ─── 7. Get User Profile ──────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api/user
+Authorization: Bearer {{accessToken}}
+
+### ─── 8a. Refresh Token ────────────────────────────────────────────────────────
+
+# @name refresh
+POST {{baseUrl}}/api/user/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ─── 8b. Logout ────────────────────────────────────────────────────────────────
+
+DELETE {{baseUrl}}/api/user/logout
+Authorization: Bearer {{accessToken}}
+
+### ─── 8c. Refresh after logout (should return 401) ────────────────────────────
+
+POST {{baseUrl}}/api/user/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ─── 9a. Soft Delete ────────────────────────────────────────────────────────────
+
+DELETE {{baseUrl}}/api/user?soft=true
+Authorization: Bearer {{accessToken}}
+
+### ─── 9b. Hard Delete ───────────────────────────────────────────────────────────
+
+DELETE {{baseUrl}}/api/user
+Authorization: Bearer {{accessToken}}
+
+### ─── 10. Invite Colleague (admin only) ────────────────────────────────────────
+
+POST {{baseUrl}}/api/user/invite
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "email": "colleague@company.com",
+  "name": "Jane",
+  "lastName": "Smith"
+}
+
+### ─── 10b. Invite - Non-admin (403) ────────────────────────────────────────────
+# Login as an invited guest first, then try to invite
+
+POST {{baseUrl}}/api/user/invite
+Content-Type: application/json
+Authorization: Bearer <guest_access_token>
+
+{
+  "email": "another@company.com"
+}
+
+### ─── BONUS: Change Password ───────────────────────────────────────────────────
+
+PUT {{baseUrl}}/api/user/password
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "currentPassword": "{{password}}",
+  "newPassword": "NewSecurePass2"
+}
+
+### ─── BONUS: Change Password - Same password (400) ────────────────────────────
+
+PUT {{baseUrl}}/api/user/password
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "currentPassword": "NewSecurePass2",
+  "newPassword": "NewSecurePass2"
+}
+
+### ─── API Info ──────────────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api
+
+### ─── Swagger Docs ──────────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api-docs
+
+### ─── 404 Not Found ─────────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api/nonexistent
