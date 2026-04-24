@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "node --watch --env-file=.env src/index.js",
     "start": "node --env-file=.env src/index.js",
-    "test": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --detectOpenHandles",
-    "test:coverage": "npm test -- --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --detectOpenHandles",
+    "test:local": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --detectOpenHandles",
+    "test:coverage": "npm run test:local -- --coverage"
   },
   "engines": {
     "node": ">=22.0.0"
