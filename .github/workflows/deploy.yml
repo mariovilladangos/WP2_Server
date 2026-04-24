@@ -53,4 +53,4 @@ jobs:
         working-directory: ejercicios/T11
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --detach --service podcasthub
+        run: railway up --detach --service WP2_T11
