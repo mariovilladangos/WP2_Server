@@ -1,4 +1,4 @@
-import Client from '../models/Client.js';
+import Client from '../models/client.model.js';
 import { AppError } from '../utils/AppError.js';
 import { createClientSchema, updateClientSchema } from '../validators/client.validator.js';
 
