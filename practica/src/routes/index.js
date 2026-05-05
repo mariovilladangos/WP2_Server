@@ -19,11 +19,8 @@ router.get('/', (req, res) => {
 });
 
 router.use('/user', userRoutes);
-
 router.use('/client', clientRoutes);
-
 router.use('/project', projectRoutes);
-
 router.use('/deliverynote', deliveryNoteRoutes);
 
 export default router;

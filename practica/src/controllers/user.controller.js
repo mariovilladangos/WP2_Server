@@ -17,7 +17,7 @@ import {
 // Helper to generate 6-digit code
 const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// ─── 1. Register ──────────────────────────────────────────────────────────────
+// 1. Register
 export const register = async (req, res, next) => {
   try {
     const parsed = registerSchema.safeParse(req.body);
@@ -57,7 +57,7 @@ export const register = async (req, res, next) => {
   }
 };
 
-// ─── 2. Email Validation ──────────────────────────────────────────────────────
+// 2. Email Validation
 export const validateEmail = async (req, res, next) => {
   try {
     const parsed = validationSchema.safeParse(req.body);
@@ -100,7 +100,7 @@ export const validateEmail = async (req, res, next) => {
   }
 };
 
-// ─── 3. Login ─────────────────────────────────────────────────────────────────
+// 3. Login
 export const login = async (req, res, next) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
@@ -142,7 +142,7 @@ export const login = async (req, res, next) => {
   }
 };
 
-// ─── 4. Personal Onboarding ───────────────────────────────────────────────────
+// 4. Personal Onboarding
 export const onboarding = async (req, res, next) => {
   try {
     const parsed = onboardingSchema.safeParse(req.body);
@@ -163,7 +163,7 @@ export const onboarding = async (req, res, next) => {
   }
 };
 
-// ─── 5. Company Onboarding ────────────────────────────────────────────────────
+// 5. Company Onboarding
 export const companyOnboarding = async (req, res, next) => {
   try {
     const parsed = companyOnboardingSchema.safeParse(req.body);
@@ -216,7 +216,7 @@ export const companyOnboarding = async (req, res, next) => {
   }
 };
 
-// ─── 6. Upload Company Logo ───────────────────────────────────────────────────
+// 6. Upload Company Logo
 export const uploadLogo = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -241,7 +241,7 @@ export const uploadLogo = async (req, res, next) => {
   }
 };
 
-// ─── 7. Get User ──────────────────────────────────────────────────────────────
+// 7. Get User
 export const getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate('company');
@@ -251,7 +251,7 @@ export const getUser = async (req, res, next) => {
   }
 };
 
-// ─── 8a. Refresh Token ────────────────────────────────────────────────────────
+// 8a. Refresh Token
 export const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken: token } = req.body;
@@ -281,7 +281,7 @@ export const refreshToken = async (req, res, next) => {
   }
 };
 
-// ─── 8b. Logout ───────────────────────────────────────────────────────────────
+// 8b. Logout
 export const logout = async (req, res, next) => {
   try {
     await User.findByIdAndUpdate(req.user._id, { refreshToken: null });
@@ -291,7 +291,7 @@ export const logout = async (req, res, next) => {
   }
 };
 
-// ─── 9. Delete User ───────────────────────────────────────────────────────────
+// 9. Delete User
 export const deleteUser = async (req, res, next) => {
   try {
     const soft = req.query.soft === 'true';
@@ -315,7 +315,7 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-// ─── 10. Invite Colleague ─────────────────────────────────────────────────────
+// 10. Invite Colleague
 export const inviteUser = async (req, res, next) => {
   try {
     const parsed = inviteSchema.safeParse(req.body);
@@ -371,7 +371,7 @@ export const inviteUser = async (req, res, next) => {
   }
 };
 
-// ─── BONUS: Change Password ───────────────────────────────────────────────────
+// BONUS: Change Password
 export const changePassword = async (req, res, next) => {
   try {
     const parsed = changePasswordSchema.safeParse(req.body);

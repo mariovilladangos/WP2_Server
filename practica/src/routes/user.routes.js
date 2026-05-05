@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/auth.middleware.js';
 import { checkRole } from '../middleware/role.middleware.js';
-import { upload } from '../middleware/upload.middleware.js';
+import { uploadImage } from '../middleware/upload.middleware.js';
 import {
   register,
   validateEmail,
@@ -217,7 +217,7 @@ router.put('/company', authMiddleware, companyOnboarding);
  *       400:
  *         description: No file or no company
  */
-router.patch('/logo', authMiddleware, upload.single('logo'), uploadLogo);
+router.patch('/logo', authMiddleware, uploadImage.single('logo'), uploadLogo);
 
 /**
  * @swagger
