@@ -85,9 +85,98 @@ router.get('/', listProjects);
  */
 router.get('/archived', listArchivedProjects);
 
+/**
+ * @swagger
+ * /api/project/{id}:
+ *   get:
+ *     summary: Get a single project (with populated client)
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Project data
+ *       404:
+ *         description: Not found
+ */
 router.get('/:id', getProject);
+
+/**
+ * @swagger
+ * /api/project/{id}:
+ *   put:
+ *     summary: Update a project
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProject'
+ *     responses:
+ *       200:
+ *         description: Updated project
+ *       404:
+ *         description: Project or client not found
+ *       409:
+ *         description: Project code already exists
+ */
 router.put('/:id', updateProject);
+
+/**
+ * @swagger
+ * /api/project/{id}:
+ *   delete:
+ *     summary: Archive or hard-delete a project
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: soft
+ *         schema: { type: boolean, default: true }
+ *     responses:
+ *       200:
+ *         description: Deleted/archived
+ *       404:
+ *         description: Not found
+ */
 router.delete('/:id', deleteProject);
+
+/**
+ * @swagger
+ * /api/project/{id}/restore:
+ *   patch:
+ *     summary: Restore an archived project
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Project restored
+ *       404:
+ *         description: Archived project not found
+ */
 router.patch('/:id/restore', restoreProject);
 
 export default router;
