@@ -3,7 +3,7 @@ import Client from '../models/client.model.js';
 import { AppError } from '../utils/AppError.js';
 import { createProjectSchema, updateProjectSchema } from '../validators/project.validator.js';
 
-// ── POST /api/project ──────────────────────────────────────────────────────────
+// POST /api/project
 export const createProject = async (req, res, next) => {
   try {
     const parsed = createProjectSchema.safeParse(req.body);
@@ -32,7 +32,7 @@ export const createProject = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── PUT /api/project/:id ───────────────────────────────────────────────────────
+// PUT /api/project/:id
 export const updateProject = async (req, res, next) => {
   try {
     const parsed = updateProjectSchema.safeParse(req.body);
@@ -58,7 +58,7 @@ export const updateProject = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── GET /api/project ───────────────────────────────────────────────────────────
+// GET /api/project
 export const listProjects = async (req, res, next) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -85,7 +85,7 @@ export const listProjects = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── GET /api/project/archived ──────────────────────────────────────────────────
+// GET /api/project/archived
 export const listArchivedProjects = async (req, res, next) => {
   try {
     const projects = await Project.find({ company: req.user.company, deleted: true })
@@ -94,7 +94,7 @@ export const listArchivedProjects = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── GET /api/project/:id ───────────────────────────────────────────────────────
+// GET /api/project/:id
 export const getProject = async (req, res, next) => {
   try {
     const project = await Project.findOne({ _id: req.params.id, company: req.user.company, deleted: false })
@@ -104,7 +104,7 @@ export const getProject = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── DELETE /api/project/:id ────────────────────────────────────────────────────
+// DELETE /api/project/:id
 export const deleteProject = async (req, res, next) => {
   try {
     const soft = req.query.soft !== 'false';
@@ -122,7 +122,7 @@ export const deleteProject = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ── PATCH /api/project/:id/restore ────────────────────────────────────────────
+// PATCH /api/project/:id/restore
 export const restoreProject = async (req, res, next) => {
   try {
     const project = await Project.findOne({ _id: req.params.id, company: req.user.company, deleted: true });
