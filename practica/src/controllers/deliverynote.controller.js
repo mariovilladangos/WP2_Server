@@ -32,7 +32,7 @@ export const createDeliveryNote = async (req, res, next) => {
       workDate: new Date(data.workDate),
     });
 
-    // Socket.IO (Fase 5)
+    // Socket.IO
     if (req.io) req.io.to(companyId.toString()).emit('deliverynote:new', note);
 
     return res.status(201).json({ deliveryNote: note });

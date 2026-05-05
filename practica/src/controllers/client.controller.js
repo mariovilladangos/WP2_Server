@@ -27,7 +27,7 @@ export const createClient = async (req, res, next) => {
       name, cif, email, phone, address,
     });
 
-    // Socket.IO event (se añade en Fase 5)
+    // Socket.IO event
     if (req.io) req.io.to(companyId.toString()).emit('client:new', client);
 
     return res.status(201).json({ client });
