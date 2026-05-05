@@ -4,6 +4,7 @@ import {
   createDeliveryNote, listDeliveryNotes, getDeliveryNote,
   deleteDeliveryNote, signDeliveryNote, downloadPdf,
 } from '../controllers/deliverynote.controller.js';
+import { uploadImage, processSignatureImage } from '../middleware/upload.middleware.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -19,7 +20,7 @@ router.post('/', createDeliveryNote);
 router.get('/', listDeliveryNotes);
 router.get('/pdf/:id', downloadPdf);
 router.get('/:id', getDeliveryNote);
-router.patch('/:id/sign', signDeliveryNote);
+router.patch('/:id/sign', uploadImage.single('signature'), processSignatureImage, signDeliveryNote);
 router.delete('/:id', deleteDeliveryNote);
 
 export default router;

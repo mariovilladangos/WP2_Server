@@ -3,6 +3,8 @@ import Project from '../models/project.model.js';
 import Client from '../models/client.model.js';
 import { AppError } from '../utils/AppError.js';
 import { createDeliveryNoteSchema } from '../validators/deliverynote.validator.js';
+import { uploadBuffer } from '../services/storage.service.js';
+import { generateDeliveryNotePdf } from '../services/pdf.service.js';
 
 // POST /api/deliverynote
 export const createDeliveryNote = async (req, res, next) => {
@@ -102,10 +104,73 @@ export const deleteDeliveryNote = async (req, res, next) => {
 
 // PATCH /api/deliverynote/:id/sign
 export const signDeliveryNote = async (req, res, next) => {
-  return next(new AppError('onwork', 501));
+  try {
+    const note = await DeliveryNote.findOne({ _id: req.params.id, company: req.user.company, deleted: false })
+      .populate('user', 'name lastName email')
+      .populate('client', 'name cif email phone address')
+      .populate('project', 'name projectCode address');
+
+    if (!note) return next(new AppError('Delivery note not found', 404));
+    if (note.signed) return next(new AppError('Delivery note is already signed', 400));
+
+    if (!req.file) return next(new AppError('Signature image is required', 400));
+
+    // 1. Subir firma a Cloudinary
+    const { url: signatureUrl } = await uploadBuffer(req.file.buffer, {
+      folder: `bildyapp/signatures/${note.company}`,
+      publicId: `sign_${note._id}`,
+    });
+
+    // 2. Marcar como firmado
+    note.signed      = true;
+    note.signedAt    = new Date();
+    note.signatureUrl = signatureUrl;
+    await note.save();
+
+    // Refrescar nota con URL de firma para el PDF
+    note.signatureUrl = signatureUrl;
+
+    // 3. Generar PDF
+    const pdfBuffer = await generateDeliveryNotePdf(note);
+
+    // 4. Subir PDF a Cloudinary
+    const { url: pdfUrl } = await uploadBuffer(pdfBuffer, {
+      folder: `bildyapp/pdfs/${note.company}`,
+      publicId: `pdf_${note._id}`,
+      resourceType: 'raw',
+    });
+
+    note.pdfUrl = pdfUrl;
+    await note.save();
+
+    // Socket.IO event
+    if (req.io) req.io.to(note.company.toString()).emit('deliverynote:signed', { _id: note._id, pdfUrl });
+
+    return res.status(200).json({ deliveryNote: note });
+  } catch (err) { next(err); }
 };
 
 // GET /api/deliverynote/pdf/:id
 export const downloadPdf = async (req, res, next) => {
-  return next(new AppError('onwork', 501));
+  try {
+    const note = await DeliveryNote.findOne({ _id: req.params.id, company: req.user.company, deleted: false })
+      .populate('user', 'name lastName email')
+      .populate('client', 'name cif email phone address')
+      .populate('project', 'name projectCode address');
+
+    if (!note) return next(new AppError('Delivery note not found', 404));
+
+    // Si ya existe PDF firmado en la nube, redirigir
+    if (note.signed && note.pdfUrl) {
+      return res.redirect(note.pdfUrl);
+    }
+
+    // Generar PDF al vuelo
+    const pdfBuffer = await generateDeliveryNotePdf(note);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="albaran-${note._id}.pdf"`,
+    });
+    return res.send(pdfBuffer);
+  } catch (err) { next(err); }
 };
