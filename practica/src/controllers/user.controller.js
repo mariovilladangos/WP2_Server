@@ -1,9 +1,10 @@
 import User from '../models/user.model.js';
 import Company from '../models/company.model.js';
-import { encrypt, compare } from '../utils/password.js';
-import { signAccessToken, signRefreshToken, verifyToken } from '../utils/jwt.js';
 import { notifier } from '../services/notification.service.js';
 import { AppError } from '../utils/AppError.js';
+import { encrypt, compare } from '../utils/password.js';
+import { sendVerificationEmail, sendInvitationEmail } from '../services/mail.service.js';
+import { signAccessToken, signRefreshToken, verifyToken } from '../utils/jwt.js';
 import {
   registerSchema,
   loginSchema,
@@ -44,7 +45,8 @@ export const register = async (req, res, next) => {
     const accessToken  = signAccessToken(user);
     const refreshToken = signRefreshToken(user);
     await User.findByIdAndUpdate(user._id, { refreshToken });
-
+    
+    await sendVerificationEmail(user.email, code).catch(console.error); 
     notifier.emit('user:registered', { email: user.email, verificationCode: code });
 
     return res.status(201).json({
@@ -350,6 +352,7 @@ export const inviteUser = async (req, res, next) => {
       verificationAttempts: 0,
     });
 
+    await sendInvitationEmail(invitedUser.email, tempPassword, admin.company.name).catch(console.error);
     notifier.emit('user:invited', {
       email: invitedUser.email,
       company: admin.company,

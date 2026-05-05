@@ -1,4 +1,33 @@
 import { AppError } from '../utils/AppError.js';
+import { sendSlackError } from '../services/logger.service.js';
+
+export const errorHandler = async (err, req, res, next) => {
+  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  const message    = err.message || 'Internal Server Error';
+
+  // Notificar errores 5XX a Slack
+  if (statusCode >= 500) {
+    await sendSlackError({
+      method: req.method,
+      path:   req.originalUrl,
+      statusCode,
+      message,
+      stack: err.stack,
+    }).catch(() => {});
+  }
+
+  res.status(statusCode).json({
+    error: true,
+    message,
+    ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {}),
+  });
+};
+
+export const notFoundHandler = (req, res) => {
+  res.status(404).json({ error: true, message: `Route ${req.originalUrl} not found` });
+};
+
+/* PAST ERROR HANDLER (COMMENTED OUT TILL TESTING)
 
 export const errorHandler = (err, req, res, next) => {
   // Only log unexpected errors (not operational AppErrors)
@@ -40,7 +69,4 @@ export const errorHandler = (err, req, res, next) => {
     message: err.message || 'Internal server error',
   });
 };
-
-export const notFoundHandler = (req, res) => {
-  res.status(404).json({ error: true, message: `Route not found: ${req.method} ${req.path}` });
-};
+*/
