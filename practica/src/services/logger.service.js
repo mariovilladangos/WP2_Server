@@ -2,6 +2,7 @@
  * Envía un mensaje a Slack con un Incoming Webhook.
  */
 export const sendSlackError = async ({ method, path, statusCode, message, stack }) => {
+  if (process.env.NODE_ENV === 'test') return;
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) return;
 

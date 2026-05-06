@@ -13,7 +13,6 @@ beforeAll(async () => {
     await mongoose.connect(process.env.MONGODB_URI);
   }
 
-  // Crear empresa y usuario admin
   const company = await Company.create({
     owner: new mongoose.Types.ObjectId(),
     name: 'Test Corp',
@@ -27,13 +26,13 @@ beforeAll(async () => {
   });
   token = res.body.token;
 
-  // Asignar compañía al usuario
   await User.findByIdAndUpdate(res.body.user._id, { company: companyId, role: 'admin' });
 });
 
 afterAll(async () => {
   await Client.deleteMany({});
-  await mongoose.disconnect();
+  await Company.deleteMany({ name: 'Test Corp' });
+  await User.deleteMany({ email: { $regex: /^client-test-/ } });
 });
 
 describe('POST /api/client', () => {
@@ -74,6 +73,100 @@ describe('GET /api/client', () => {
     expect(res.body).toHaveProperty('totalItems');
     expect(res.body).toHaveProperty('totalPages');
   });
+
+  it('should filter clients by name', async () => {
+    const res = await request(app)
+      .get('/api/client?name=Cliente')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.clients.length).toBeGreaterThan(0);
+  });
+});
+
+describe('GET /api/client/:id', () => {
+  it('should return a single client', async () => {
+    const create = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'GetById', cif: 'GET00001' });
+    const id = create.body.client._id;
+
+    const res = await request(app)
+      .get(`/api/client/${id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.client._id).toBe(id);
+  });
+
+  it('should return 404 for missing client', async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const res = await request(app)
+      .get(`/api/client/${fakeId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('PUT /api/client/:id', () => {
+  it('should update a client', async () => {
+    const create = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'UpdMe', cif: 'UPD00001' });
+    const id = create.body.client._id;
+
+    const res = await request(app)
+      .put(`/api/client/${id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Updated Name', email: 'upd@test.com' });
+    expect(res.status).toBe(200);
+    expect(res.body.client.name).toBe('Updated Name');
+    expect(res.body.client.email).toBe('upd@test.com');
+  });
+
+  it('should reject duplicate CIF on update', async () => {
+    await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Existing', cif: 'CIFEXIST1' });
+    const create = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'WillCollide', cif: 'CIFCOL001' });
+    const id = create.body.client._id;
+
+    const res = await request(app)
+      .put(`/api/client/${id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ cif: 'CIFEXIST1' });
+    expect(res.status).toBe(409);
+  });
+
+  it('should return 404 when updating missing client', async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const res = await request(app)
+      .put(`/api/client/${fakeId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Nope' });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /api/client/archived', () => {
+  it('should list archived clients', async () => {
+    const create = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'ToArchive', cif: 'ARC00001' });
+    const id = create.body.client._id;
+    await request(app).delete(`/api/client/${id}`).set('Authorization', `Bearer ${token}`);
+
+    const res = await request(app)
+      .get('/api/client/archived')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.clients.some((c) => c._id === id)).toBe(true);
+  });
 });
 
 describe('DELETE /api/client/:id (soft)', () => {
@@ -94,6 +187,30 @@ describe('DELETE /api/client/:id (soft)', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(archived.body.clients.some((c) => c._id === id)).toBe(true);
   });
+
+  it('should hard-delete a client with soft=false', async () => {
+    const create = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'HardDel', cif: 'HRD00001' });
+    const id = create.body.client._id;
+
+    const del = await request(app)
+      .delete(`/api/client/${id}?soft=false`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(del.status).toBe(200);
+
+    const after = await Client.findById(id);
+    expect(after).toBeNull();
+  });
+
+  it('should return 404 deleting missing client', async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const res = await request(app)
+      .delete(`/api/client/${fakeId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('PATCH /api/client/:id/restore', () => {
@@ -110,5 +227,13 @@ describe('PATCH /api/client/:id/restore', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.client.deleted).toBe(false);
+  });
+
+  it('should return 404 restoring non-archived client', async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const res = await request(app)
+      .patch(`/api/client/${fakeId}/restore`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
   });
 });

@@ -18,9 +18,8 @@ let userId = '';
 let verificationCode = '';
 
 beforeAll(async () => {
-  const uri = process.env.MONGODB_TEST_URI || process.env.MONGODB_URI;
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(uri);
+    await mongoose.connect(process.env.MONGODB_URI);
   }
   // Clean up test data
   await User.deleteMany({ email: { $regex: /^test-/ } });
@@ -30,7 +29,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await User.deleteMany({ email: { $regex: /^test-/ } });
   await Company.deleteMany({ name: 'Test Company' });
-  await mongoose.disconnect();
 });
 
 // ─── 1. Register ─────────────────────────────────────────────────────────────
