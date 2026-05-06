@@ -117,65 +117,65 @@ describe('POST /api/user/login', () => {
 });
 
 // ─── 4. Personal Onboarding ───────────────────────────────────────────────────
-describe('PUT /api/user/onboarding', () => {
+describe('PUT /api/user/register (personal data)', () => {
   it('should update personal data', async () => {
     const res = await request(app)
-      .put(`${BASE}/onboarding`)
+      .put(`${BASE}/register`)
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ name: 'John', lastName: 'Doe', NIF: '12345678A' });
+      .send({ name: 'John', lastName: 'Doe', nif: '12345678A' });
     expect(res.status).toBe(200);
     expect(res.body.user.name).toBe('John');
     expect(res.body.user.lastName).toBe('Doe');
-    expect(res.body.user.NIF).toBe('12345678A');
+    expect(res.body.user.nif).toBe('12345678A');
   });
 
   it('should reject missing fields', async () => {
     const res = await request(app)
-      .put(`${BASE}/onboarding`)
+      .put(`${BASE}/register`)
       .set('Authorization', `Bearer ${accessToken}`)
       .send({ name: 'John' });
     expect(res.status).toBe(400);
   });
 
   it('should reject unauthenticated request', async () => {
-    const res = await request(app).put(`${BASE}/onboarding`).send({ name: 'John', lastName: 'Doe', NIF: '12345678A' });
+    const res = await request(app).put(`${BASE}/register`).send({ name: 'John', lastName: 'Doe', nif: '12345678A' });
     expect(res.status).toBe(401);
   });
 });
 
 // ─── 5. Company Onboarding ────────────────────────────────────────────────────
-describe('PUT /api/user/company', () => {
+describe('PATCH /api/user/company', () => {
   it('should create a company (non-freelance)', async () => {
     const res = await request(app)
-      .put(`${BASE}/company`)
+      .patch(`${BASE}/company`)
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ isFreelance: false, name: 'Test Company', CIF: `B${Date.now()}` });
+      .send({ isFreelance: false, name: 'Test Company', cif: `B${Date.now()}` });
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('company');
     expect(res.body.user.role).toBe('admin');
   });
 
-  it('should reject missing CIF for non-freelance', async () => {
+  it('should reject missing cif for non-freelance', async () => {
     const res = await request(app)
-      .put(`${BASE}/company`)
+      .patch(`${BASE}/company`)
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ isFreelance: false, name: 'No CIF Corp' });
+      .send({ isFreelance: false, name: 'No cif Corp' });
     expect(res.status).toBe(400);
   });
 
-  it('should allow freelance using NIF as CIF', async () => {
-    // Create a fresh user with NIF already set
+  it('should allow freelance using nif as cif', async () => {
+    // Create a fresh user with nif already set
     const freelanceEmail = `freelance-${Date.now()}@example.com`;
     const regRes = await request(app).post(`${BASE}/register`).send({ email: freelanceEmail, password: 'SecurePass1' });
     const fToken = regRes.body.token;
 
     await request(app)
-      .put(`${BASE}/onboarding`)
+      .put(`${BASE}/register`)
       .set('Authorization', `Bearer ${fToken}`)
-      .send({ name: 'Free', lastName: 'Lance', NIF: `F${Date.now()}` });
+      .send({ name: 'Free', lastName: 'Lance', nif: `F${Date.now()}` });
 
     const res = await request(app)
-      .put(`${BASE}/company`)
+      .patch(`${BASE}/company`)
       .set('Authorization', `Bearer ${fToken}`)
       .send({ isFreelance: true, name: 'My Freelance Co' });
     expect(res.status).toBe(200);
@@ -296,10 +296,10 @@ describe('POST /api/user/invite', () => {
 });
 
 // ─── 8b. Logout ───────────────────────────────────────────────────────────────
-describe('DELETE /api/user/logout', () => {
+describe('POST /api/user/logout', () => {
   it('should logout and invalidate refresh token', async () => {
     const res = await request(app)
-      .delete(`${BASE}/logout`)
+      .post(`${BASE}/logout`)
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.status).toBe(200);
   });
@@ -307,6 +307,16 @@ describe('DELETE /api/user/logout', () => {
   it('should reject refresh token after logout', async () => {
     const res = await request(app).post(`${BASE}/refresh`).send({ refreshToken });
     expect(res.status).toBe(401);
+  });
+});
+
+// ─── NoSQL Injection Sanitize ─────────────────────────────────────────────────
+describe('NoSQL injection sanitize', () => {
+  it('should reject login attempt using $ne operator in body', async () => {
+    const res = await request(app)
+      .post(`${BASE}/login`)
+      .send({ email: { $ne: '' }, password: { $ne: '' } });
+    expect(res.status).toBe(400);
   });
 });
 

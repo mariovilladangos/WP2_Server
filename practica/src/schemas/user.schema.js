@@ -17,31 +17,29 @@ export const validationSchema = z.object({
 export const onboardingSchema = z.object({
   name:     z.string().min(1).transform((v) => v.trim()),
   lastName: z.string().min(1).transform((v) => v.trim()),
-  NIF:      z.string().min(1).transform((v) => v.trim().toUpperCase()),
+  nif:      z.string().min(1).transform((v) => v.trim().toUpperCase()),
 });
+
+const addressZodSchema = z.object({
+  street:   z.string().optional().default(''),
+  number:   z.string().optional().default(''),
+  postal:   z.string().optional().default(''),
+  city:     z.string().optional().default(''),
+  province: z.string().optional().default(''),
+}).optional().default({});
 
 // Bonus: discriminatedUnion for freelance vs company onboarding
 export const companyOnboardingSchema = z.discriminatedUnion('isFreelance', [
   z.object({
     isFreelance: z.literal(true),
     name: z.string().min(1).transform((v) => v.trim()),
-    address: z.object({
-      street:  z.string().optional().default(''),
-      city:    z.string().optional().default(''),
-      postal:  z.string().optional().default(''),
-      country: z.string().optional().default(''),
-    }).optional().default({}),
+    address: addressZodSchema,
   }),
   z.object({
     isFreelance: z.literal(false),
     name: z.string().min(1).transform((v) => v.trim()),
-    CIF: z.string().min(1).transform((v) => v.trim().toUpperCase()),
-    address: z.object({
-      street:  z.string().optional().default(''),
-      city:    z.string().optional().default(''),
-      postal:  z.string().optional().default(''),
-      country: z.string().optional().default(''),
-    }).optional().default({}),
+    cif: z.string().min(1).transform((v) => v.trim().toUpperCase()),
+    address: addressZodSchema,
   }),
 ]);
 

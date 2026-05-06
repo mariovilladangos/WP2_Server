@@ -69,37 +69,38 @@ Content-Type: application/json
 
 ### ─── 4. Personal Onboarding ──────────────────────────────────────────────────
 
-PUT {{baseUrl}}/api/user/onboarding
+PUT {{baseUrl}}/api/user/register
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
   "name": "John",
   "lastName": "Doe",
-  "NIF": "12345678A"
+  "nif": "12345678A"
 }
 
 ### ─── 5a. Company Onboarding - Create new company ─────────────────────────────
 
-PUT {{baseUrl}}/api/user/company
+PATCH {{baseUrl}}/api/user/company
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
   "isFreelance": false,
   "name": "Acme Corp",
-  "CIF": "B12345678",
+  "cif": "B12345678",
   "address": {
-    "street": "Calle Mayor 1",
+    "street": "Calle Mayor",
+    "number": "1",
     "city": "Madrid",
     "postal": "28001",
-    "country": "Spain"
+    "province": "Madrid"
   }
 }
 
-### ─── 5b. Company Onboarding - Freelance (uses NIF as CIF) ────────────────────
+### ─── 5b. Company Onboarding - Freelance (uses nif as cif) ────────────────────
 
-PUT {{baseUrl}}/api/user/company
+PATCH {{baseUrl}}/api/user/company
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
@@ -108,16 +109,16 @@ Authorization: Bearer {{accessToken}}
   "name": "My Freelance Business"
 }
 
-### ─── 5c. Company Onboarding - Join existing company by CIF ───────────────────
+### ─── 5c. Company Onboarding - Join existing company by cif ───────────────────
 
-PUT {{baseUrl}}/api/user/company
+PATCH {{baseUrl}}/api/user/company
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
   "isFreelance": false,
   "name": "Join Acme",
-  "CIF": "B12345678"
+  "cif": "B12345678"
 }
 
 ### ─── 6. Upload Company Logo ───────────────────────────────────────────────────
@@ -151,7 +152,7 @@ Content-Type: application/json
 
 ### ─── 8b. Logout ────────────────────────────────────────────────────────────────
 
-DELETE {{baseUrl}}/api/user/logout
+POST {{baseUrl}}/api/user/logout
 Authorization: Bearer {{accessToken}}
 
 ### ─── 8c. Refresh after logout (should return 401) ────────────────────────────

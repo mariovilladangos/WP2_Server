@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
-  street:  { type: String, trim: true, default: '' },
-  city:    { type: String, trim: true, default: '' },
-  postal:  { type: String, trim: true, default: '' },
-  country: { type: String, trim: true, default: '' },
+  street:   { type: String, trim: true, default: '' },
+  number:   { type: String, trim: true, default: '' },
+  postal:   { type: String, trim: true, default: '' },
+  city:     { type: String, trim: true, default: '' },
+  province: { type: String, trim: true, default: '' },
 }, { _id: false });
 
 const userSchema = new mongoose.Schema({
@@ -31,7 +32,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
-  NIF: {
+  nif: {
     type: String,
     trim: true,
     uppercase: true,

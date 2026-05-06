@@ -16,7 +16,7 @@ beforeAll(async () => {
   const company = await Company.create({
     owner: new mongoose.Types.ObjectId(),
     name: 'Test Corp',
-    CIF: 'B99999999',
+    cif: 'B99999999',
   });
   companyId = company._id;
 

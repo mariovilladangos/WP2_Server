@@ -119,9 +119,9 @@ router.post('/login', login);
 
 /**
  * @swagger
- * /api/user/onboarding:
+ * /api/user/register:
  *   put:
- *     summary: Update personal data (name, lastName, NIF)
+ *     summary: Update personal data (name, lastName, nif)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -131,7 +131,7 @@ router.post('/login', login);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, lastName, NIF]
+ *             required: [name, lastName, nif]
  *             properties:
  *               name:
  *                 type: string
@@ -139,7 +139,7 @@ router.post('/login', login);
  *               lastName:
  *                 type: string
  *                 example: Doe
- *               NIF:
+ *               nif:
  *                 type: string
  *                 example: 12345678A
  *     responses:
@@ -148,13 +148,13 @@ router.post('/login', login);
  *       400:
  *         description: Validation error
  */
-router.put('/onboarding', authMiddleware, onboarding);
+router.put('/register', authMiddleware, onboarding);
 
 /**
  * @swagger
  * /api/user/company:
- *   put:
- *     summary: Company onboarding - create or join by CIF
+ *   patch:
+ *     summary: Company onboarding - create or join by cif
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -174,7 +174,7 @@ router.put('/onboarding', authMiddleware, onboarding);
  *                     type: string
  *                     example: My Freelance Business
  *               - type: object
- *                 required: [isFreelance, name, CIF]
+ *                 required: [isFreelance, name, cif]
  *                 properties:
  *                   isFreelance:
  *                     type: boolean
@@ -182,7 +182,7 @@ router.put('/onboarding', authMiddleware, onboarding);
  *                   name:
  *                     type: string
  *                     example: Acme Corp
- *                   CIF:
+ *                   cif:
  *                     type: string
  *                     example: B12345678
  *     responses:
@@ -191,7 +191,7 @@ router.put('/onboarding', authMiddleware, onboarding);
  *       400:
  *         description: Validation error
  */
-router.put('/company', authMiddleware, companyOnboarding);
+router.patch('/company', authMiddleware, companyOnboarding);
 
 /**
  * @swagger
@@ -263,7 +263,7 @@ router.post('/refresh', refreshToken);
 /**
  * @swagger
  * /api/user/logout:
- *   delete:
+ *   post:
  *     summary: Logout - invalidate refresh token
  *     tags: [Users]
  *     security:
@@ -272,7 +272,7 @@ router.post('/refresh', refreshToken);
  *       200:
  *         description: Logged out successfully
  */
-router.delete('/logout', authMiddleware, logout);
+router.post('/logout', authMiddleware, logout);
 
 /**
  * @swagger

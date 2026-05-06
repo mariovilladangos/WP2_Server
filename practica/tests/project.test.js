@@ -11,7 +11,7 @@ let token, clientId, otherClientId;
 beforeAll(async () => {
   if (mongoose.connection.readyState === 0) await mongoose.connect(process.env.MONGODB_URI);
 
-  const company = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'ProjectCorp', CIF: 'P88888888' });
+  const company = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'ProjectCorp', cif: 'P88888888' });
   const reg = await request(app).post('/api/user/register').send({ email: `proj-${Date.now()}@test.com`, password: 'SecurePass1' });
   token = reg.body.token;
   await User.findByIdAndUpdate(reg.body.user._id, { company: company._id, role: 'admin' });
@@ -20,7 +20,7 @@ beforeAll(async () => {
   clientId = cli._id.toString();
 
   // Cliente de OTRA compañía para test cruzado
-  const otherCompany = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'OtherCorp', CIF: 'O77777777' });
+  const otherCompany = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'OtherCorp', cif: 'O77777777' });
   const other = await Client.create({ user: new mongoose.Types.ObjectId(), company: otherCompany._id, name: 'Other', cif: 'OTH00001' });
   otherClientId = other._id.toString();
 });

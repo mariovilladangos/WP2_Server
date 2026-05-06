@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import User from '../models/user.model.js';
 import Company from '../models/company.model.js';
 import { notifier } from '../services/notification.service.js';
@@ -5,6 +6,7 @@ import { AppError } from '../utils/AppError.js';
 import { encrypt, compare } from '../utils/password.js';
 import { sendVerificationEmail, sendInvitationEmail } from '../services/mail.service.js';
 import { signAccessToken, signRefreshToken, verifyToken } from '../utils/jwt.js';
+import { uploadBuffer } from '../services/storage.service.js';
 import {
   registerSchema,
   loginSchema,
@@ -39,7 +41,7 @@ export const register = async (req, res, next) => {
       email,
       password: hashed,
       verificationCode: code,
-      verificationAttempts: 0,
+      verificationAttempts: 3,
     });
 
     const accessToken  = signAccessToken(user);
@@ -75,7 +77,7 @@ export const validateEmail = async (req, res, next) => {
       return next(new AppError('Email already verified', 400));
     }
 
-    if (user.verificationAttempts >= 3) {
+    if (user.verificationAttempts <= 0) {
       return res.status(429).json({
         error: true,
         message: 'Too many attempts. Account locked for verification.',
@@ -83,8 +85,8 @@ export const validateEmail = async (req, res, next) => {
     }
 
     if (user.verificationCode !== code) {
-      await User.findByIdAndUpdate(user._id, { $inc: { verificationAttempts: 1 } });
-      const remaining = 2 - user.verificationAttempts;
+      await User.findByIdAndUpdate(user._id, { $inc: { verificationAttempts: -1 } });
+      const remaining = user.verificationAttempts - 1;
       return next(new AppError(`Invalid code. ${remaining} attempt(s) remaining.`, 400));
     }
 
@@ -151,11 +153,11 @@ export const onboarding = async (req, res, next) => {
     if (!parsed.success) {
       return next(new AppError(parsed.error.errors[0].message, 400));
     }
-    const { name, lastName, NIF } = parsed.data;
+    const { name, lastName, nif } = parsed.data;
 
     const updated = await User.findByIdAndUpdate(
       req.user._id,
-      { name, lastName, NIF },
+      { name, lastName, nif },
       { new: true }
     ).populate('company');
 
@@ -179,15 +181,15 @@ export const companyOnboarding = async (req, res, next) => {
     let company;
     let isFreelance = data.isFreelance;
 
-    // Determine CIF: freelancers use their NIF as CIF
-    const cif = isFreelance ? user.NIF : data.CIF;
+    // Determine cif: freelancers use their nif as cif
+    const cif = isFreelance ? user.nif : data.cif;
 
     if (!cif) {
-      return next(new AppError('NIF is required for freelance company creation. Run personal onboarding first.', 400));
+      return next(new AppError('nif is required for freelance company creation. Run personal onboarding first.', 400));
     }
 
-    // Try to find existing company with this CIF
-    const existing = await Company.findOne({ CIF: cif.toUpperCase(), deleted: false });
+    // Try to find existing company with this cif
+    const existing = await Company.findOne({ cif: cif.toUpperCase(), deleted: false });
 
     if (existing) {
       // Join existing company as guest
@@ -201,7 +203,7 @@ export const companyOnboarding = async (req, res, next) => {
       company = await Company.create({
         owner: user._id,
         name: data.name,
-        CIF: cif.toUpperCase(),
+        cif: cif.toUpperCase(),
         address: data.address || {},
         isFreelance,
       });
@@ -230,14 +232,23 @@ export const uploadLogo = async (req, res, next) => {
       return next(new AppError('User has no associated company', 400));
     }
 
-    const logoUrl = `/uploads/${req.file.filename}`;
+    const optimized = await sharp(req.file.buffer)
+      .resize({ width: 512, withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer();
+
+    const { url } = await uploadBuffer(optimized, {
+      folder: `bildyapp/logos/${user.company}`,
+      publicId: `logo_${user.company}`,
+    });
+
     const company = await Company.findByIdAndUpdate(
       user.company,
-      { logoUrl },
+      { logo: url },
       { new: true }
     );
 
-    return res.status(200).json({ company, logoUrl });
+    return res.status(200).json({ company, logo: url });
   } catch (err) {
     next(err);
   }

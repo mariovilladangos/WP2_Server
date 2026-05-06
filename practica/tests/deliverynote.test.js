@@ -12,7 +12,7 @@ let token, clientId, projectId, otherProjectId, userId, companyId;
 beforeAll(async () => {
   if (mongoose.connection.readyState === 0) await mongoose.connect(process.env.MONGODB_URI);
 
-  const company = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'DNcorp', CIF: 'DN7777777' });
+  const company = await Company.create({ owner: new mongoose.Types.ObjectId(), name: 'DNcorp', cif: 'DN7777777' });
   companyId = company._id;
   const reg = await request(app).post('/api/user/register').send({ email: `dn-${Date.now()}@test.com`, password: 'SecurePass1' });
   token = reg.body.token;

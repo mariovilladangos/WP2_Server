@@ -48,8 +48,8 @@ const options = {
           properties: {
             _id:        { type: 'string' },
             name:       { type: 'string', example: 'Obras García S.L.' },
-            CIF:        { type: 'string', example: 'B12345678' },
-            logoUrl:    { type: 'string' },
+            cif:        { type: 'string', example: 'B12345678' },
+            logo:       { type: 'string' },
             isFreelance:{ type: 'boolean' },
             address:    { $ref: '#/components/schemas/Address' },
           },
