@@ -1,5 +1,5 @@
 import User from '../models/user.model.js';
-import { verifyToken } from '../utils/jwt.js';
+import { verifyAccessToken } from '../utils/jwt.js';
 import { AppError } from '../utils/AppError.js';
 
 const authMiddleware = async (req, res, next) => {
@@ -10,7 +10,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
 
     if (!decoded?.userId) {
       return next(new AppError('Invalid token', 401));

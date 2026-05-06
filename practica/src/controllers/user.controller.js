@@ -5,7 +5,7 @@ import { notifier } from '../services/notification.service.js';
 import { AppError } from '../utils/AppError.js';
 import { encrypt, compare } from '../utils/password.js';
 import { sendVerificationEmail, sendInvitationEmail } from '../services/mail.service.js';
-import { signAccessToken, signRefreshToken, verifyToken } from '../utils/jwt.js';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { uploadBuffer } from '../services/storage.service.js';
 import {
   registerSchema,
@@ -199,12 +199,17 @@ export const companyOnboarding = async (req, res, next) => {
       });
       company = existing;
     } else {
-      // Create new company — user becomes owner/admin
+      // Create new company — user becomes owner/admin.
+      // Freelancers heredan dirección personal del usuario si no se aporta.
+      const hasAddressData = data.address && Object.values(data.address).some((v) => v);
+      const companyAddress = hasAddressData
+        ? data.address
+        : (isFreelance && user.address ? user.address.toObject() : {});
       company = await Company.create({
         owner: user._id,
         name: data.name,
         cif: cif.toUpperCase(),
-        address: data.address || {},
+        address: companyAddress,
         isFreelance,
       });
       await User.findByIdAndUpdate(user._id, {
@@ -274,7 +279,7 @@ export const refreshToken = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = verifyToken(token);
+      decoded = verifyRefreshToken(token);
     } catch {
       return next(new AppError('Invalid or expired refresh token', 401));
     }
@@ -337,7 +342,7 @@ export const inviteUser = async (req, res, next) => {
     }
     const { email, name, lastName } = parsed.data;
 
-    const admin = await User.findById(req.user._id);
+    const admin = await User.findById(req.user._id).populate('company');
     if (!admin.company) {
       return next(new AppError('Admin has no company assigned', 400));
     }
@@ -358,15 +363,16 @@ export const inviteUser = async (req, res, next) => {
       name: name || '',
       lastName: lastName || '',
       role: 'guest',
-      company: admin.company,
+      company: admin.company._id,
       verificationCode: code,
-      verificationAttempts: 0,
+      verificationAttempts: 3,
     });
 
     await sendInvitationEmail(invitedUser.email, tempPassword, admin.company.name).catch(console.error);
     notifier.emit('user:invited', {
       email: invitedUser.email,
-      company: admin.company,
+      company: admin.company._id,
+      companyName: admin.company.name,
       tempPassword,
     });
 
@@ -377,7 +383,7 @@ export const inviteUser = async (req, res, next) => {
         email: invitedUser.email,
         role: invitedUser.role,
         company: invitedUser.company,
-        tempPassword, // In production this would be emailed
+        tempPassword,
       },
     });
   } catch (err) {

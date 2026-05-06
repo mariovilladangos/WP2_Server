@@ -8,7 +8,7 @@ import routes from './routes/index.js';
 import User from './models/user.model.js';
 import { createServer } from 'http';
 import { swaggerSpec } from './config/swagger.js';
-import { verifyToken } from './utils/jwt.js';
+import { verifyAccessToken } from './utils/jwt.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -25,7 +25,7 @@ io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
     if (!token) return next(new Error('No token provided'));
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
     const user = await User.findById(decoded.userId);
     if (!user || user.deleted) return next(new Error('Unauthorized'));
     socket.user = user;

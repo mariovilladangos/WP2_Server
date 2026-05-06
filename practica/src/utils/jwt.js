@@ -11,11 +11,15 @@ export const signAccessToken = (user) => {
 export const signRefreshToken = (user) => {
   return jwt.sign(
     { userId: user._id },
-    process.env.JWT_SECRET,
+    process.env.JWT_REFRESH_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
   );
 };
 
-export const verifyToken = (token) => {
+export const verifyAccessToken = (token) => {
   return jwt.verify(token, process.env.JWT_SECRET);
+};
+
+export const verifyRefreshToken = (token) => {
+  return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 };
