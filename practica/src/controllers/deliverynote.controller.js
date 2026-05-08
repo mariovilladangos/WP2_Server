@@ -111,6 +111,13 @@ export const signDeliveryNote = async (req, res, next) => {
       .populate('project', 'name projectCode address');
 
     if (!note) return next(new AppError('Delivery note not found', 404));
+
+    const isOwner = note.user._id.equals(req.user._id);
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      return next(new AppError('Not authorized to sign this delivery note', 403));
+    }
+
     if (note.signed) return next(new AppError('Delivery note is already signed', 400));
 
     if (!req.file) return next(new AppError('Signature image is required', 400));
