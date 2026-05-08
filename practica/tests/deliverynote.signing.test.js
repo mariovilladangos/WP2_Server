@@ -71,6 +71,58 @@ describe('PATCH /api/deliverynote/:id/sign — happy path', () => {
   });
 });
 
+describe('PATCH /api/deliverynote/:id/sign — authorization', () => {
+  let guestToken, guestId;
+
+  beforeAll(async () => {
+    const reg = await request(app).post('/api/user/register').send({
+      email: `sign-guest-${Date.now()}@test.com`, password: 'SecurePass1',
+    });
+    guestToken = reg.body.token;
+    guestId = reg.body.user._id;
+    await User.findByIdAndUpdate(guestId, { company: companyId, role: 'guest' });
+  });
+
+  it('returns 403 when a guest who is not the creator tries to sign', async () => {
+    const note = await DeliveryNote.create({
+      user: userId, company: companyId, client: clientId, project: projectId,
+      format: 'hours', workDate: new Date(), hours: 2,
+    });
+
+    const png = await sharp({ create: { width: 200, height: 100, channels: 3, background: '#fff' } }).png().toBuffer();
+    const res = await request(app)
+      .patch(`/api/deliverynote/${note._id}/sign`)
+      .set('Authorization', `Bearer ${guestToken}`)
+      .attach('signature', png, 'sig.png');
+
+    expect(res.status).toBe(403);
+    const after = await DeliveryNote.findById(note._id);
+    expect(after.signed).toBe(false);
+  });
+
+  it('allows an admin to sign a note created by another user', async () => {
+    uploadBufferMock
+      .mockResolvedValueOnce({ url: 'https://cdn/sig2.webp', publicId: 'sig2' })
+      .mockResolvedValueOnce({ url: 'https://cdn/note2.pdf', publicId: 'pdf2' });
+
+    const note = await DeliveryNote.create({
+      user: guestId, company: companyId, client: clientId, project: projectId,
+      format: 'hours', workDate: new Date(), hours: 3,
+    });
+
+    const png = await sharp({ create: { width: 200, height: 100, channels: 3, background: '#fff' } }).png().toBuffer();
+    const res = await request(app)
+      .patch(`/api/deliverynote/${note._id}/sign`)
+      .set('Authorization', `Bearer ${token}`) // admin token from outer beforeAll
+      .attach('signature', png, 'sig.png');
+
+    expect(res.status).toBe(200);
+    expect(res.body.deliveryNote.signed).toBe(true);
+    expect(res.body.deliveryNote.signatureUrl).toBe('https://cdn/sig2.webp');
+    expect(res.body.deliveryNote.pdfUrl).toBe('https://cdn/note2.pdf');
+  });
+});
+
 describe('GET /api/deliverynote/pdf/:id', () => {
   it('streams PDF on the fly for unsigned note', async () => {
     const note = await DeliveryNote.create({
